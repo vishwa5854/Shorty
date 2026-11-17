@@ -83,12 +83,39 @@ server {
 ## Docker
 
 ```sh
-docker build -t shorty .
-docker run -d --name shorty -p 8080:8080 -v shorty-data:/data shorty
+mkdir -p data
+cp .env.example .env
+sed -i "s/^PUID=.*/PUID=$(id -u)/; s/^PGID=.*/PGID=$(id -g)/" .env
+docker compose up -d --build
 ```
 
-The image is Alpine plus the static binary; the database lives on the `/data`
-volume.
+The database is a normal file on the host at `./data/shorty.db` — back it up by
+copying that directory. `PUID`/`PGID` must match whoever owns `./data`, or
+SQLite cannot create its files inside the bind mount.
+
+The compose file runs the container rootless and locked down:
+
+- `user: ${PUID}:${PGID}` — never uid 0
+- `cap_drop: ALL` and `security_opt: no-new-privileges:true`
+- `read_only: true` root filesystem; only the `/data` volume and a 16 MB
+  `/tmp` tmpfs are writable
+- healthcheck on `/api/health` every 30s
+
+Without compose, the same thing by hand:
+
+```sh
+docker build -t shorty .
+docker run -d --name shorty \
+  -p 8080:8080 \
+  --user "$(id -u):$(id -g)" \
+  --read-only --tmpfs /tmp:size=16m \
+  --cap-drop ALL --security-opt no-new-privileges \
+  -v "$PWD/data:/data" \
+  shorty
+```
+
+Inside the image `SHORTY_DB` defaults to `/data/shorty.db` and `SHORTY_ADDR` to
+`:8080`.
 
 ## Notes
 

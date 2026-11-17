@@ -1,0 +1,42 @@
+name: shorty
+
+services:
+  shorty:
+    build:
+      context: .
+    image: shorty:latest
+    container_name: shorty
+    restart: unless-stopped
+
+    ports:
+      - "${SHORTY_PORT:-8080}:8080"
+
+    environment:
+      SHORTY_ADDR: ":8080"
+      SHORTY_DB: /data/shorty.db
+      SHORTY_BASE_URL: "${SHORTY_BASE_URL:-}"
+
+    volumes:
+      # SQLite file lives here: ./data/shorty.db on the host.
+      - ./data:/data
+
+    # Rootless: no process inside the container runs as uid 0. Set PUID/PGID
+    # to whoever owns ./data (`id -u`, `id -g`) — see .env.example.
+    user: "${PUID:-1000}:${PGID:-1000}"
+
+    # No capabilities, no way to gain any, read-only root filesystem. The only
+    # writable paths are the /data volume and a small tmpfs for /tmp.
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
