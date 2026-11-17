@@ -61,7 +61,9 @@ explicitly is still the safest behind a proxy.
 
 ## Behind nginx
 
-The app handles plain HTTP; nginx terminates TLS:
+The app handles plain HTTP; nginx terminates TLS. With the compose stack nginx
+runs on the host and proxies to the container's fixed address on the internal
+bridge (no ports are published):
 
 ```nginx
 server {
@@ -71,7 +73,7 @@ server {
     # ssl_certificate ... (certbot / your CA)
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://172.31.0.10:8080;
         proxy_set_header Host              $host;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host  $host;
@@ -79,6 +81,9 @@ server {
     }
 }
 ```
+
+If you run the binary directly on the host instead of in Docker, point
+`proxy_pass` at `http://127.0.0.1:8080`.
 
 ## Docker
 
@@ -93,7 +98,14 @@ The database is a normal file on the host at `./data/shorty.db` — back it up b
 copying that directory. `PUID`/`PGID` must match whoever owns `./data`, or
 SQLite cannot create its files inside the bind mount.
 
-The compose file runs the container rootless and locked down:
+Networking: the container publishes no ports. It sits on an `internal: true`
+bridge network with a fixed subnet (`172.31.0.0/24` by default) and a fixed
+address (`172.31.0.10`), and nginx on the host connects to that address on 8080.
+`internal: true` blocks the container from reaching the outside (no default
+gateway, no NAT) while host-to-container traffic still routes over the bridge.
+Change the subnet in `.env` if it clashes with another docker network.
+
+The compose file also runs the container rootless and locked down:
 
 - `user: ${PUID}:${PGID}` — never uid 0
 - `cap_drop: ALL` and `security_opt: no-new-privileges:true`
@@ -105,8 +117,9 @@ Without compose, the same thing by hand:
 
 ```sh
 docker build -t shorty .
+docker network create --internal --subnet 172.31.0.0/24 shorty
 docker run -d --name shorty \
-  -p 8080:8080 \
+  --network shorty --ip 172.31.0.10 \
   --user "$(id -u):$(id -g)" \
   --read-only --tmpfs /tmp:size=16m \
   --cap-drop ALL --security-opt no-new-privileges \

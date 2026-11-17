@@ -8,9 +8,8 @@ services:
     container_name: shorty
     restart: unless-stopped
 
-    ports:
-      - "${SHORTY_PORT:-8080}:8080"
-
+    # No ports published. The container lives on an internal bridge network and
+    # nginx on the host proxies straight to its fixed address.
     environment:
       SHORTY_ADDR: ":8080"
       SHORTY_DB: /data/shorty.db
@@ -20,8 +19,8 @@ services:
       # SQLite file lives here: ./data/shorty.db on the host.
       - ./data:/data
 
-    # Rootless: no process inside the container runs as uid 0. Set PUID/PGID
-    # to whoever owns ./data (`id -u`, `id -g`) — see .env.example.
+    # Rootless: nothing inside the container runs as uid 0. Set PUID/PGID to
+    # whoever owns ./data (`id -u`, `id -g`) — see .env.example.
     user: "${PUID:-1000}:${PGID:-1000}"
 
     # No capabilities, no way to gain any, read-only root filesystem. The only
@@ -34,9 +33,26 @@ services:
     tmpfs:
       - /tmp:size=16m,mode=1777
 
+    networks:
+      shorty:
+        ipv4_address: "${SHORTY_IP:-172.31.0.10}"
+
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/api/health"]
       interval: 30s
       timeout: 3s
       retries: 3
       start_period: 5s
+
+networks:
+  shorty:
+    name: shorty
+    driver: bridge
+    # internal: true means no gateway to the outside. Host -> container still
+    # works because that is plain L2 routing over the bridge, so nginx on the
+    # host reaches 172.31.0.10:8080 while the container has no route out.
+    internal: true
+    ipam:
+      config:
+        - subnet: "${SHORTY_SUBNET:-172.31.0.0/24}"
+          gateway: "${SHORTY_GATEWAY:-172.31.0.1}"
