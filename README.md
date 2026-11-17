@@ -126,6 +126,9 @@ Inside the image `SHORTY_DB` defaults to `/data/shorty.db` and `SHORTY_ADDR` to
   babysit. Postgres would add a daemon, credentials and migrations for no
   benefit at homelab scale — revisit only if this is ever run as more than one
   instance.
+- The UI has a light/dark toggle. Dark uses the VS Code "Dark Modern" palette
+  (`#1f1f1f` editor, `#181818` chrome, `#0078d4` accent, `#4daafc` links); the
+  choice is remembered in `localStorage` and applied before first paint.
 - The one dependency is `modernc.org/sqlite` (pure Go, no cgo), which keeps the
   binary static and the build free of gcc.
 

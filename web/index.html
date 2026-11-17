@@ -5,12 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Shorty</title>
   <link rel="stylesheet" href="/static/style.css">
+  <script>
+    // Runs before first paint so a stored dark preference does not flash light.
+    (function () {
+      try {
+        var t = localStorage.getItem('shorty-theme');
+        if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+      } catch (e) { /* storage blocked, stay light */ }
+    })();
+  </script>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
     <div class="word">shorty<i>_</i></div>
     <div class="tag">homelab</div>
+    <button class="theme" id="theme" type="button" aria-pressed="false" aria-label="Toggle dark mode">
+      <svg id="theme-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1111.2 3a6.6 6.6 0 009.8 9.8z"/></svg>
+      <span id="theme-label">dark</span>
+    </button>
   </div>
 
   <h1>Condense a URL.</h1>
