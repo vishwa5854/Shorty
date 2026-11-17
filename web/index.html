@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shorty</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="word">shorty<i>_</i></div>
+    <div class="tag">homelab</div>
+  </div>
+
+  <h1>Condense a URL.</h1>
+  <p class="lede">One paste, five characters. net/http, SQLite, and one pure-Go driver.</p>
+
+  <form class="bar" id="form">
+    <label class="sr-only" for="url">Long URL</label>
+    <span class="prompt" aria-hidden="true">$</span>
+    <input id="url" name="url" type="text" inputmode="url" spellcheck="false"
+           autocomplete="off" placeholder="paste a long url" required>
+    <span class="sep" aria-hidden="true"></span>
+    <button id="submit" type="submit">condense <kbd aria-hidden="true">&#9166;</kbd></button>
+  </form>
+
+  <p class="err" id="error" role="alert" hidden></p>
+
+  <div class="out" id="result" hidden>
+    <div class="row">
+      <span class="k">short</span>
+      <a id="short" href="#" target="_blank" rel="noopener"></a>
+      <button class="copy" id="copy" type="button">copy</button>
+    </div>
+    <div class="row">
+      <span class="k">target</span>
+      <span class="arrow" id="target"></span>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span><b>POST</b> /api/condense</span>
+    <span><b>GET</b> /&lt;slug&gt; &rarr; 302</span>
+    <span><b>db</b> sqlite/wal</span>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

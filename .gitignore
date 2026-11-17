@@ -1,0 +1,5 @@
+# ignored
+/shorty
+*.db
+*.db-wal
+*.db-shm
